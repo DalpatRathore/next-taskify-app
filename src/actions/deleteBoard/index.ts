@@ -10,8 +10,10 @@ import { redirect } from "next/navigation";
 import { createAuditLog } from "@/lib/createAuditLog";
 import { ACTION, ENTITY_TYPE } from "@prisma/client";
 import { decrementAvailabelCount } from "@/lib/orgLimit";
+import { checkSubscription } from "@/lib/subscription";
 
 const handler = async (data: InputType): Promise<ReturnTypeType> => {
+  const isPro = await checkSubscription();
   const { userId, orgId } = auth();
   if (!userId || !orgId) {
     return {
@@ -27,8 +29,9 @@ const handler = async (data: InputType): Promise<ReturnTypeType> => {
         orgId,
       },
     });
-
-    await decrementAvailabelCount();
+    if (!isPro) {
+      await decrementAvailabelCount();
+    }
 
     await createAuditLog({
       entityId: board.id,
